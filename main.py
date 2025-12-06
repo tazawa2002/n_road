@@ -9,7 +9,7 @@ from mcpi.block import *
 class n_road():
     # 初期化メソッド
     def __init__(self, n):
-        self.ad = "localhost"
+        self.ad = "192.168.1.174"
         self.mc = Minecraft.create(address=self.ad)
         self.origin = Vec3(0,0,0)
         self.t1 = threading.Thread(target=self.thread1)
@@ -31,6 +31,12 @@ class n_road():
     # setBlocks()のオーバーラップ
     def setBlocks(self, pos1, pos2, block):
         self.mc.setBlocks(self.origin+pos1, self.origin+pos2, block)
+
+    def setTilePos(self, pos):
+        self.mc.player.setTilePos(self.origin + pos)
+    
+    def getTilePos(self):
+        return self.mc.player.getTilePos() + self.origin
     
     # setBlock()のオーバーラップ
     def setBlock(self, pos, block):
@@ -38,11 +44,12 @@ class n_road():
 
     def seiti(self):
         # 整地
-        self.mc.setBlocks(-50,0,-50,50,10,50,AIR)
-        self.mc.setBlocks(-50,-1,-50,50,-1,50,GRASS)
+        self.setBlocks(Vec3(-50,0,-50),Vec3(50,50,50),AIR)
+        self.setBlocks(Vec3(-50,-1,-50),Vec3(50,-1,50),GRASS)
 
     # フィールドをセットするメソッド
     def set_field(self):
+
         # 床の設置
         self.setBlocks(Vec3(0,0,0), Vec3(5,0,25), STONE_SLAB) # メイン通路
         self.setBlocks(Vec3(-10,0,-4), Vec3(5,0,-1), STONE_SLAB) # A
@@ -50,10 +57,22 @@ class n_road():
         self.setBlocks(Vec3(0,0,25), Vec3(15,0,28), STONE_SLAB) # B
         self.setBlocks(Vec3(16,0,25), Vec3(21,0,38), STONE_SLAB) # B終端
 
+        # 点字ブロック
+        tenji_block_id = STONE_SLAB.withData(1)
+        self.setBlocks(Vec3(2,0,0), Vec3(3,0,25), tenji_block_id) # メイン通路
+        self.setBlocks(Vec3(-10,0,-3), Vec3(3,0,-2), tenji_block_id) # A
+        self.setBlocks(Vec3(2,0,-1), Vec3(3,0,-1), tenji_block_id) # メイン通路 to A
+        self.setBlocks(Vec3(-14,0,-14), Vec3(-13,0,-2), tenji_block_id) # A終端
+        self.setBlocks(Vec3(-12,0,-3), Vec3(-11,0,-2), tenji_block_id) # A to A終端
+        self.setBlocks(Vec3(2,0,26), Vec3(15,0,27), tenji_block_id) # B
+        self.setBlocks(Vec3(16,0,26), Vec3(17,0,27), tenji_block_id) # B to B終端
+        self.setBlocks(Vec3(18,0,26), Vec3(19,0,38), tenji_block_id) # B終端
+
         height = 5
         # 天井の設置
-        block_ceiling = AIR
+        # block_ceiling = AIR
         # block_ceiling = STONE_SLAB
+        block_ceiling = GLOWSTONE_BLOCK
         self.setBlocks(Vec3(0,height,0), Vec3(5,height,25), block_ceiling) # メイン通路
         self.setBlocks(Vec3(-10,height,-4), Vec3(5,height,-1), block_ceiling) # A
         self.setBlocks(Vec3(-16,height,-14), Vec3(-11,height,-1), block_ceiling) # A終端
@@ -82,7 +101,7 @@ class n_road():
     # プレイヤーの位置を監視するスレッド
     def thread1(self):
         while True:
-            pos = self.mc.player.getTilePos()
+            pos = self.getTilePos()
             if self.score == self.n:
                 break
             elif pos.x > self.origin.x+10:
@@ -98,7 +117,7 @@ class n_road():
                 self.makeRoad(0)
 
                 # テレポート
-                self.mc.player.setTilePos(-5, pos.y, pos.z-29)
+                self.setTilePos(Vec3(-5, pos.y, pos.z-29))
             elif pos.x < self.origin.x-5:
                 # 異変判定
                 judge = self.judgement(1)
@@ -112,7 +131,7 @@ class n_road():
                 self.makeRoad(1)
 
                 # テレポート
-                self.mc.player.setTilePos(10, pos.y, pos.z+29)
+                self.setTilePos(Vec3(10, pos.y, pos.z+29))
             sleep(0.5)
         
         # 8番出口の時の処理
