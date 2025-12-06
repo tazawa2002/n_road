@@ -9,7 +9,7 @@ from mcpi.block import *
 class n_road():
     # 初期化メソッド
     def __init__(self, n):
-        self.ad = "192.168.1.174"
+        self.ad = "localhost"
         self.mc = Minecraft.create(address=self.ad)
         self.origin = Vec3(0,0,0)
         self.t1 = threading.Thread(target=self.thread1)
@@ -36,7 +36,9 @@ class n_road():
         self.mc.player.setTilePos(self.origin + pos)
     
     def getTilePos(self):
-        return self.mc.player.getTilePos() + self.origin
+        # Return the player's position relative to the origin (local coordinates).
+        # Previously this added origin which caused double-offset when origin != (0,0,0).
+        return self.mc.player.getTilePos() - self.origin
     
     # setBlock()のオーバーラップ
     def setBlock(self, pos, block):
@@ -104,7 +106,8 @@ class n_road():
             pos = self.getTilePos()
             if self.score == self.n:
                 break
-            elif pos.x > self.origin.x+10:
+            # pos is now local (relative to origin), so compare against local thresholds
+            elif pos.x > 10:
                 # 異変判定
                 judge = self.judgement(0)
                 if judge == True:
@@ -118,7 +121,7 @@ class n_road():
 
                 # テレポート
                 self.setTilePos(Vec3(-5, pos.y, pos.z-29))
-            elif pos.x < self.origin.x-5:
+            elif pos.x < -5:
                 # 異変判定
                 judge = self.judgement(1)
                 if judge == True:
